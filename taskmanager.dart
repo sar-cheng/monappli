@@ -1,25 +1,41 @@
+import 'main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'dart:async';
 import 'dart:io';
+import 'Models/board.dart';
 
 import 'package:path_provider/path_provider.dart';
 
+String taskName = '';
+String taskType = '';
+String taskDetails = '';
+
+void addItem(String itemTitle, DateTime itemDateTime, String itemDetails) {
+  boardData[0].items?.add(BoardItemObject(
+      title: itemTitle, dateTime: itemDateTime, details: itemDetails));
+}
+
 class TaskStorage {
   Future<String> get _localPath async {
-    final directory = await getApplicationDocumentsDirectory();
-    return directory.path;
+    final directory = (await getApplicationDocumentsDirectory()).path;
+
+    var localpath = await Directory('$directory/Appli/MyTasks/$taskType')
+        .create(recursive: true);
+
+    return localpath.path;
   }
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    return File('$path/counter.txt'); //path needs to be a variable
+    return File('$path/$taskName.txt');
   }
 
   Future<String> readTask() async {
     final file = await _localFile;
 
-    //read
+    // Read the file
     final contents = await file.readAsString();
     return contents;
   }
@@ -42,6 +58,7 @@ class TaskPage extends StatefulWidget {
 
 class _TaskPageState extends State<TaskPage> {
   DateTime date = DateTime.now();
+  String dropdownValue = 'To-Do';
 
   final nameController = TextEditingController();
   final descriptionController = TextEditingController();
@@ -52,15 +69,26 @@ class _TaskPageState extends State<TaskPage> {
     super.dispose();
   }
 
-  String taskName = ''; //limit no. of characters and only to alphanum
-  String taskDetails = '';
+  void setTaskType(String type) {
+    setState(() => taskType = type);
+  }
 
   Future<File> _saveTask() {
     setState(() {
       taskName = nameController.text;
       taskDetails = descriptionController.text;
     });
+    var file = widget.storage.writeTask(taskDetails);
+
     return widget.storage.writeTask(taskDetails);
+  }
+
+  void _showPath() {
+    setState(() {
+      TaskStorage()._localPath.then((value) {
+        nameController.text = value;
+      });
+    });
   }
 
   @override
@@ -78,7 +106,7 @@ class _TaskPageState extends State<TaskPage> {
                       onPressed: () async {
                         DateTime? newDate = await showDatePicker(
                             context: context,
-                            initialDate: DateTime.now(),
+                            initialDate: date,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100));
 
@@ -93,12 +121,36 @@ class _TaskPageState extends State<TaskPage> {
                       '${date.day}/${date.month}/${date.year}'),
                 ),
                 const Divider(),
+                Align(
+                    alignment: Alignment.topLeft,
+                    child: DropdownButton<String>(
+                      value: dropdownValue,
+                      alignment: Alignment.topLeft,
+                      items: <String>['To-Do', 'In Progress', 'Done']
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          dropdownValue = newValue!;
+                        });
+                      },
+                    )),
+                const Divider(),
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(
                     labelText: "NEW TASK",
                     border: InputBorder.none,
                   ),
+                  inputFormatters: <TextInputFormatter>[
+                    FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z]"))
+                  ],
+                  maxLength: 200,
+                  maxLengthEnforcement: MaxLengthEnforcement.enforced,
                 ),
                 const Divider(),
                 TextField(
@@ -130,7 +182,12 @@ class _TaskPageState extends State<TaskPage> {
                 SpeedDialChild(
                     label: 'SAVE TASK',
                     child: const Icon(Icons.save),
-                    onTap: (() => _saveTask()))
+                    onTap: (() => {
+                          setTaskType(dropdownValue),
+                          //addItem(taskName, date, taskDetails),
+                          _saveTask(),
+                          pageController.jumpToPage(1)
+                        }))
               ],
             )));
   }

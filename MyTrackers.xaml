@@ -1,0 +1,177 @@
+﻿<Window x:Class="monappli.Windows.MyTrackers"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="MyTrackers" Height="450" Width="800"
+        DataContext="{Binding RelativeSource={RelativeSource Mode=Self}}"
+        Closing="Window_Closing">
+
+    <Grid>
+        <Grid.Resources>
+            <Style TargetType="Border">
+                <Setter Property="Background" Value="White"/>
+                <Setter Property="Opacity" Value="0.8"/>
+            </Style>
+        </Grid.Resources>
+
+        <Grid.Background>
+            <ImageBrush ImageSource="https://wallpapercave.com/wp/wp8063327.jpg" Stretch="UniformToFill"/>
+        </Grid.Background>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="0"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="6*"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="65"/>
+            <RowDefinition Height="10"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="75"/>
+            <ColumnDefinition Width="6*"/>
+            <ColumnDefinition Width="75"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="1" Grid.Row="1" CornerRadius="0, 0, 25, 0">
+            <Image Source="{DynamicResource Logo}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border Grid.Column="3" Grid.Row="1" CornerRadius="0, 0, 25, 25">
+            <TextBlock Name="PageTitle" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border Grid.Row="3"
+                Grid.Column="1"
+                CornerRadius="0, 25, 25, 0"
+                Padding="0,25,0,25">
+            <Border.Resources>
+                <Style TargetType="Button">
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                    <Setter Property="Padding" Value="5"/>
+                </Style>
+            </Border.Resources>
+
+            <StackPanel>
+                <Button Name="HomeButton"
+                        Content="Home"
+                        Click="HomeButton_Click"/>
+                <Button Name="ToDoButton"
+                        Content="To-Do"
+                        Click="ToDoButton_Click"/>
+                <Button Name="TrackersButton"
+                        Content="My trackers"
+                        Click="TrackersButton_Click"/>
+                <Button Name="EntriesButton"
+                        Content="My entries"
+                        Click="EntriesButton_Click"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main Content -->
+        <Border Grid.Row="3" Grid.Column="3" CornerRadius="25">
+            <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Auto">
+                <Grid Margin="10">
+                    <Grid.Resources>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Margin" Value="20, 10, 20, 10"/>
+                            <Setter Property="FontSize" Value="16"/>
+                        </Style>
+                    </Grid.Resources>
+                    
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="Day" FontWeight="Bold"/>
+                        <ItemsControl ItemsSource="{Binding DaysOfWeek}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" Margin="20, 10, 20, 10" FontSize="10"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <Border Grid.Column="1" BorderBrush="Black" Opacity="1" BorderThickness="0.5"/>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Day" FontWeight="Bold"/>
+                        <ItemsControl ItemsSource="{Binding DaysOfMonth}"
+                                  Grid.Row="1"
+                                  Grid.Column="1">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" TextAlignment="Center" Margin="20, 10, 20, 10" FontSize="10"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <Border Grid.Column="3" BorderBrush="Black" Opacity="1" BorderThickness="0.5"/>
+                    <ItemsControl ItemsSource="{Binding HabitsList, UpdateSourceTrigger=PropertyChanged}" Grid.Column="4">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <Border Name="HabitNameBorder">
+                                        <Button Content="{Binding HabitName}" 
+                                                Margin="20, 10, 20, 10" 
+                                                FontWeight="Bold" 
+                                                FontSize="16"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Click="HabitTitle_Click"/>
+                                    </Border>
+                                    <ItemsControl ItemsSource="{Binding HabitChecks}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox IsChecked="{Binding IsSelected}" Margin="20, 9.1, 20, 9.1" HorizontalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+        
+        <!-- Customise buttons -->
+        <Border Grid.Row="5" Grid.Column="1"
+                CornerRadius="0, 15, 15, 0"
+                Padding="0,10,0,0">
+            <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Vertical">
+                <StackPanel.Resources>
+                    <Style TargetType="Button">
+                        <Setter Property="VerticalAlignment" Value="Top"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="Padding" Value="5, 2, 5, 2"/>
+                        <Setter Property="FontSize" Value="8"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                    </Style>
+                </StackPanel.Resources>
+                <Button Content="+ New habit" 
+                    Click="NewHabit"/>
+                <Button Content="- Delete habit"
+                    Click="DeleteHabit_Click"/>
+                <Button Content="x Edit habit"
+                    Click="EditHabit_Click"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

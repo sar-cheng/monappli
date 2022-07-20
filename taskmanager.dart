@@ -5,91 +5,78 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'dart:async';
 import 'dart:io';
 import 'Models/board.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_generator/hive_generator.dart';
 
 import 'package:path_provider/path_provider.dart';
 
+part 'taskmanager.g.dart';
+
 String taskName = '';
 String taskType = '';
-String taskDetails = '';
+DateTime taskDate = DateTime.now();
 
-void addItem(String itemTitle, DateTime itemDateTime, String itemDetails) {
-  boardData[0].items?.add(BoardItemObject(
-      title: itemTitle, dateTime: itemDateTime, details: itemDetails));
+void addItem(String itemTitle, DateTime itemDateTime) {
+  boardData[0]
+      .items
+      ?.add(BoardItemObject(title: itemTitle, dateTime: itemDateTime));
 }
 
-class TaskStorage {
-  Future<String> get _localPath async {
-    final directory = (await getApplicationDocumentsDirectory()).path;
+@HiveType(typeId: 1)
+class MyTask {
+  MyTask({required this.name, required this.type, required this.date});
 
-    var localpath = await Directory('$directory/Appli/MyTasks/$taskType')
-        .create(recursive: true);
+  @HiveField(0)
+  String name;
 
-    return localpath.path;
-  }
+  @HiveField(1)
+  String type;
 
-  Future<File> get _localFile async {
-    final path = await _localPath;
-    return File('$path/$taskName.txt');
-  }
-
-  Future<String> readTask() async {
-    final file = await _localFile;
-
-    // Read the file
-    final contents = await file.readAsString();
-    return contents;
-  }
-
-  Future<File> writeTask(String content) async {
-    final file = await _localFile;
-
-    return file.writeAsString(content); //line breaks
-  }
+  @HiveField(2)
+  DateTime date;
 }
 
 class TaskPage extends StatefulWidget {
-  const TaskPage({super.key, required this.storage});
-
-  final TaskStorage storage;
+  const TaskPage({super.key});
 
   @override
   State<TaskPage> createState() => _TaskPageState();
 }
 
 class _TaskPageState extends State<TaskPage> {
-  DateTime date = DateTime.now();
+  /*var _toDoBox = Hive.box('toDoBox');
+  var _inProgressBox = Hive.box('inProgressBox');
+  var _doneBox = Hive.box('doneBox');*/
+
   String dropdownValue = 'To-Do';
 
   final nameController = TextEditingController();
-  final descriptionController = TextEditingController();
-  @override
-  void dispose() {
-    nameController.dispose();
-    descriptionController.dispose();
-    super.dispose();
-  }
 
-  void setTaskType(String type) {
-    setState(() => taskType = type);
-  }
+  void setTaskType(String type) => setState(() => taskType = type);
+  void setTaskName() => setState(() => taskName = nameController.text);
 
-  Future<File> _saveTask() {
-    setState(() {
-      taskName = nameController.text;
-      taskDetails = descriptionController.text;
-    });
-    var file = widget.storage.writeTask(taskDetails);
+  /*void saveTask() {
+    // need to check for changes, remove from previous box?
 
-    return widget.storage.writeTask(taskDetails);
-  }
-
-  void _showPath() {
-    setState(() {
-      TaskStorage()._localPath.then((value) {
-        nameController.text = value;
-      });
-    });
-  }
+    switch (taskType) {
+      case 'To-Do':
+        setState(() {
+          _toDoBox.add(MyTask(name: taskName, type: taskType, date: taskDate));
+        });
+        break;
+      case 'In Progress':
+        setState(() {
+          _inProgressBox
+              .add(MyTask(name: taskName, type: taskType, date: taskDate));
+        });
+        break;
+      case 'Done':
+        setState(() {
+          _doneBox.add(MyTask(name: taskName, type: taskType, date: taskDate));
+        });
+        break;
+    }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -106,19 +93,19 @@ class _TaskPageState extends State<TaskPage> {
                       onPressed: () async {
                         DateTime? newDate = await showDatePicker(
                             context: context,
-                            initialDate: date,
+                            initialDate: taskDate,
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100));
 
                         if (newDate == null) return;
-                        setState(() => date = newDate);
+                        setState(() => taskDate = newDate);
                       },
                     )),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
                       textAlign: TextAlign.left,
-                      '${date.day}/${date.month}/${date.year}'),
+                      '${taskDate.day}/${taskDate.month}/${taskDate.year}'),
                 ),
                 const Divider(),
                 Align(
@@ -153,13 +140,6 @@ class _TaskPageState extends State<TaskPage> {
                   maxLengthEnforcement: MaxLengthEnforcement.enforced,
                 ),
                 const Divider(),
-                TextField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: "DESCRIPTION",
-                    border: InputBorder.none,
-                  ),
-                ),
               ],
             )),
         floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
@@ -178,15 +158,17 @@ class _TaskPageState extends State<TaskPage> {
                 SpeedDialChild(
                     label: 'DELETE TASK',
                     child: const Icon(Icons.delete),
-                    onTap: (() {})),
+                    onTap: (() {
+                      //setTaskType(dropdownValue);
+                      //setTaskName();
+                      //print(_toDoBox.length);
+                      //print(_toDoBox.getAt(1));
+                    })),
                 SpeedDialChild(
                     label: 'SAVE TASK',
                     child: const Icon(Icons.save),
                     onTap: (() => {
-                          setTaskType(dropdownValue),
-                          //addItem(taskName, date, taskDetails),
-                          _saveTask(),
-                          pageController.jumpToPage(1)
+                          //saveTask()
                         }))
               ],
             )));

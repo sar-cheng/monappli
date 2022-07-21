@@ -1,10 +1,10 @@
 import 'package:appli_v2/Models/MyBoard.dart';
+import 'package:appli_v2/main.dart';
 import 'package:boardview/board_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:intl/intl.dart';
 
 import 'Models/MyBoard.dart';
 import 'Models/MyTask.dart';
@@ -18,38 +18,6 @@ class TaskPage extends StatefulWidget {
 
   @override
   State<TaskPage> createState() => _TaskPageState();
-}
-
-void loadList() {
-  int numOfBox = 3;
-  // clear list first
-  //boardData.clear();
-  for (int k = 0; k < 3; k++) {
-    //add headers;
-  }
-  for (int i = 0; i < 3; i++) {
-    var box = Hive.box('toDoBox');
-
-    switch (i) {
-      case 1:
-        box = Hive.box('inProgressBox');
-        break;
-      case 2:
-        box = Hive.box('doneBox');
-        break;
-    }
-    if (box.length != 0) {
-      for (int j = 0; j < box.length; j++) {
-        var itemTitle = box.getAt(i).name;
-        var thisDate = box.getAt(i).date;
-        String itemDateTime = DateFormat('dd/mm/yyyy').format(thisDate);
-
-        boardData[i]
-            .items
-            ?.add(BoardItemObject(title: itemTitle, date: itemDateTime));
-      }
-    }
-  }
 }
 
 class _TaskPageState extends State<TaskPage> {
@@ -69,19 +37,29 @@ class _TaskPageState extends State<TaskPage> {
     // need to check for changes, remove from previous box?
     var thisTask = MyTask(name: taskName, type: taskType, date: taskDate);
     var box = _toDoBox;
+    int listIndex = 0;
 
     switch (taskType) {
       case 'To-Do':
         box = _toDoBox;
+        listIndex = 0;
         break;
       case 'In Progress':
         box = _inProgressBox;
+        listIndex = 1;
         break;
       case 'Done':
         box = _doneBox;
+        listIndex = 2;
         break;
     }
+    String _taskDate = getDate(taskDate);
     box.add(thisTask);
+    setState(() {
+      boardData[listIndex]
+          .items!
+          .add(BoardItemObject(title: taskName, date: _taskDate));
+    });
   }
 
   void printStorage() {

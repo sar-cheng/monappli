@@ -72,6 +72,30 @@ class MyBoardState extends State<MyBoard> {
     }
   }
 
+  /*Widget _buildList( List<BoardItemObject> items ) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(5),
+      itemBuilder: (context, item){
+
+        return _buildColumn();
+      }
+    )
+  }
+
+Widget _buildColumn(){
+  return GestureDetector(
+    onTap: (() {
+      
+    }),
+    child: Card(
+      child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [Text(itemObject.title!), Text(itemObject.date!)],
+            ))
+    ),
+  );
+}*/
   @override
   Widget build(BuildContext context) {
     loadList();
@@ -95,11 +119,17 @@ class MyBoardState extends State<MyBoard> {
   Widget buildBoardItem(BoardItemObject itemObject) {
     return BoardItem(
         draggable: false,
-        item: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [Text(itemObject.title!), Text(itemObject.date!)],
+        item: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () {},
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  children: [Text(itemObject.title!), Text(itemObject.date!)],
+                ),
+              ),
             ),
           ),
         ));

@@ -1,3 +1,4 @@
+import 'package:appli_v2/Models/MyBoard.dart';
 import 'package:appli_v2/TaskPage.dart';
 import 'package:appli_v2/main.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,8 @@ final List<BoardListObject> boardData = [
   BoardListObject(title: "In Progress"),
   BoardListObject(title: "Done"),
 ];
+
+final List<BoardItemObject> toDoItems = [];
 
 class BoardItemObject {
   String? title;
@@ -64,42 +67,41 @@ class MyBoardState extends State<MyBoard> {
           var itemTitle = box.getAt(j).name;
           var itemDateTime = getDate(box.getAt(j).date);
 
-          boardData[i]
+          /*boardData[i]
               .items!
-              .add(BoardItemObject(title: itemTitle, date: itemDateTime));
+              .add(BoardItemObject(title: itemTitle, date: itemDateTime));*/
+          toDoItems.add(BoardItemObject(title: itemTitle, date: itemDateTime));
         }
       }
     }
   }
 
-  /*Widget _buildList( List<BoardItemObject> items ) {
+  Widget _buildList() {
     return ListView.builder(
-      padding: const EdgeInsets.all(5),
-      itemBuilder: (context, item){
-
-        return _buildColumn();
-      }
-    )
+        padding: const EdgeInsets.all(5),
+        itemCount: toDoItems.length,
+        itemBuilder: (context, index) {
+          return _buildColumn(toDoItems[index]);
+        });
   }
 
-Widget _buildColumn(){
-  return GestureDetector(
-    onTap: (() {
-      
-    }),
-    child: Card(
-      child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [Text(itemObject.title!), Text(itemObject.date!)],
-            ))
-    ),
-  );
-}*/
+  Widget _buildColumn(BoardItemObject itemObject) {
+    return Container(
+        child: GestureDetector(
+      onTap: (() {}),
+      child: Card(
+          child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [Text(itemObject.title!), Text(itemObject.date!)],
+              ))),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     loadList();
-    List<BoardList> lists = [];
+    /*List<BoardList> lists = [];
 
     for (int i = 0; i < boardData.length; i++) {
       lists.add(_createBoardList(boardData[i]) as BoardList);
@@ -113,7 +115,9 @@ Widget _buildColumn(){
             lists: lists,
             boardViewController: boardViewController,
           )),
-    );
+    );*/
+
+    return Scaffold(body: _buildList());
   }
 
   Widget buildBoardItem(BoardItemObject itemObject) {

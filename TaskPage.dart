@@ -1,6 +1,4 @@
-import 'package:appli_v2/Models/MyBoard.dart';
 import 'package:appli_v2/main.dart';
-import 'package:boardview/board_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -9,9 +7,15 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'Models/MyBoard.dart';
 import 'Models/MyTask.dart';
 
+// global task details
 String taskName = '';
-String taskType = '';
+String taskType = 'To-Do';
 DateTime taskDate = DateTime.now();
+bool taskIsNew = false;
+
+String oldTaskName = '';
+String oldTaskType = 'To-Do';
+DateTime oldTaskDate = DateTime.now();
 
 class TaskPage extends StatefulWidget {
   const TaskPage({super.key});
@@ -25,47 +29,94 @@ class _TaskPageState extends State<TaskPage> {
   final _inProgressBox = Hive.box('inProgressBox');
   final _doneBox = Hive.box('doneBox');
 
-  String dropdownValue = 'To-Do';
+  final nameController = TextEditingController(text: taskName);
 
-  final nameController = TextEditingController();
-
-  void setTaskType(String type) => setState(() => taskType = type);
   void setTaskName() => setState(() => taskName = nameController.text);
-  // has task name been changed? check box
 
-  void saveTask() {
-    // need to check for changes, remove from previous box?
-    var thisTask = MyTask(name: taskName, type: taskType, date: taskDate);
-    var box = _toDoBox;
-    int listIndex = 0;
+  Box<dynamic> getBox() {
+    var box;
 
     switch (taskType) {
       case 'To-Do':
         box = _toDoBox;
-        listIndex = 0;
         break;
       case 'In Progress':
         box = _inProgressBox;
-        listIndex = 1;
         break;
       case 'Done':
         box = _doneBox;
-        listIndex = 2;
         break;
     }
-    String _taskDate = getDate(taskDate);
-    box.add(thisTask);
-    setState(() {
-      boardData[listIndex]
-          .items!
-          .add(BoardItemObject(title: taskName, date: _taskDate));
-    });
+
+    return box;
+  }
+
+  bool nameIsValid() {
+    var box = getBox();
+    bool isValid = true;
+    for (int i = 0; i < box.length; i++) {
+      if (taskName == box.getAt(i).name) {
+        final notif = SnackBar(
+            content: Text(
+                'Cannot be saved - there is already a task named $taskName'));
+        ScaffoldMessenger.of(context).showSnackBar(notif);
+        isValid = false;
+      }
+    }
+    return isValid;
+  }
+
+  void updateTask() {
+    var box = getBox();
+    var thisTask = MyTask(name: taskName, type: taskType, date: taskDate);
+    var oldTask = box.get(oldTaskName);
+    bool canSave = nameIsValid();
+
+    if (canSave) {
+      for (int i = 0; i < box.length; i++) {
+        if (oldTask == box.getAt(i)) {
+          box.deleteAt(i);
+          box.put(taskName, thisTask);
+        }
+      }
+
+      const notif =
+          SnackBar(content: Text('Saved - restart the app to view changes'));
+      ScaffoldMessenger.of(context).showSnackBar(notif);
+      pageController.jumpToPage(1);
+    }
+  }
+
+  void saveTask() {
+    var thisTask = MyTask(name: taskName, type: taskType, date: taskDate);
+    var box = getBox();
+    bool canSave = nameIsValid();
+
+    if (canSave) {
+      box.put(taskName, thisTask);
+
+      const notif =
+          SnackBar(content: Text('Saved - restart the app to view changes'));
+      ScaffoldMessenger.of(context).showSnackBar(notif);
+      pageController.jumpToPage(1);
+    }
+  }
+
+  void deleteTask() {
+    var box = getBox();
+    box.delete(oldTaskName);
+  }
+
+  void clearStorage() {
+    _toDoBox.clear();
+    _inProgressBox.clear();
+    _doneBox.clear();
   }
 
   void printStorage() {
-    for (int i = 0; i < _toDoBox.length; i++) {
-      print(_toDoBox.getAt(i).name);
-      print(_toDoBox.getAt(i).date);
+    for (int i = 0; i < _inProgressBox.length; i++) {
+      print(_inProgressBox.getAt(i).name);
+      print(_inProgressBox.getAt(i).date);
     }
   }
 
@@ -102,7 +153,7 @@ class _TaskPageState extends State<TaskPage> {
                 Align(
                     alignment: Alignment.topLeft,
                     child: DropdownButton<String>(
-                      value: dropdownValue,
+                      value: taskType,
                       alignment: Alignment.topLeft,
                       items: <String>['To-Do', 'In Progress', 'Done']
                           .map<DropdownMenuItem<String>>((String value) {
@@ -113,7 +164,7 @@ class _TaskPageState extends State<TaskPage> {
                       }).toList(),
                       onChanged: (String? newValue) {
                         setState(() {
-                          dropdownValue = newValue!;
+                          taskType = newValue!;
                         });
                       },
                     )),
@@ -121,7 +172,7 @@ class _TaskPageState extends State<TaskPage> {
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(
-                    labelText: "NEW TASK",
+                    labelText: "TASK NAME",
                     border: InputBorder.none,
                   ),
                   inputFormatters: <TextInputFormatter>[
@@ -150,17 +201,18 @@ class _TaskPageState extends State<TaskPage> {
                     label: 'DELETE TASK',
                     child: const Icon(Icons.delete),
                     onTap: (() {
-                      setTaskType(dropdownValue);
-                      setTaskName();
+                      //clearStorage();
+                      deleteTask();
                       printStorage();
+
+                      pageController.jumpToPage(1);
                     })),
                 SpeedDialChild(
                     label: 'SAVE TASK',
                     child: const Icon(Icons.save),
                     onTap: (() => {
-                          setTaskType(dropdownValue),
                           setTaskName(),
-                          saveTask()
+                          if (taskIsNew) {saveTask()} else {updateTask()},
                         }))
               ],
             )));

@@ -1,4 +1,4 @@
-import 'package:appli_v2/Models/MyBoard.dart';
+import 'package:appli_v2/Models/MyTask.dart';
 import 'package:appli_v2/TaskPage.dart';
 import 'package:appli_v2/main.dart';
 import 'package:flutter/material.dart';
@@ -15,14 +15,14 @@ final List<BoardListObject> boardData = [
   BoardListObject(title: "Done"),
 ];
 
-final List<BoardItemObject> toDoItems = [];
-
 class BoardItemObject {
   String? title;
+  String? type;
   String? date;
 
-  BoardItemObject({this.title, this.date}) {
+  BoardItemObject({this.title, this.type, this.date}) {
     title ??= "";
+    type ??= "";
     date ??= "";
   }
 }
@@ -46,6 +46,14 @@ class MyBoard extends StatefulWidget {
 
 class MyBoardState extends State<MyBoard> {
   final BoardViewController boardViewController = BoardViewController();
+  void resetList() {
+    setState(() {
+      boardData.clear();
+      boardData.add(BoardListObject(title: "To-Do"));
+      boardData.add(BoardListObject(title: "In Progress"));
+      boardData.add(BoardListObject(title: "Done"));
+    });
+  }
 
   void loadList() {
     int numOfBox = 3;
@@ -65,43 +73,21 @@ class MyBoardState extends State<MyBoard> {
       if (box.length != 0) {
         for (int j = 0; j < box.length; j++) {
           var itemTitle = box.getAt(j).name;
+          var itemType = box.getAt(j).type;
           var itemDateTime = getDate(box.getAt(j).date);
 
-          /*boardData[i]
-              .items!
-              .add(BoardItemObject(title: itemTitle, date: itemDateTime));*/
-          toDoItems.add(BoardItemObject(title: itemTitle, date: itemDateTime));
+          boardData[i].items!.add(BoardItemObject(
+              title: itemTitle, type: itemType, date: itemDateTime));
         }
       }
     }
   }
 
-  Widget _buildList() {
-    return ListView.builder(
-        padding: const EdgeInsets.all(5),
-        itemCount: toDoItems.length,
-        itemBuilder: (context, index) {
-          return _buildColumn(toDoItems[index]);
-        });
-  }
-
-  Widget _buildColumn(BoardItemObject itemObject) {
-    return Container(
-        child: GestureDetector(
-      onTap: (() {}),
-      child: Card(
-          child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [Text(itemObject.title!), Text(itemObject.date!)],
-              ))),
-    ));
-  }
-
   @override
   Widget build(BuildContext context) {
+    resetList();
     loadList();
-    /*List<BoardList> lists = [];
+    List<BoardList> lists = [];
 
     for (int i = 0; i < boardData.length; i++) {
       lists.add(_createBoardList(boardData[i]) as BoardList);
@@ -115,9 +101,7 @@ class MyBoardState extends State<MyBoard> {
             lists: lists,
             boardViewController: boardViewController,
           )),
-    );*/
-
-    return Scaffold(body: _buildList());
+    );
   }
 
   Widget buildBoardItem(BoardItemObject itemObject) {
@@ -126,7 +110,20 @@ class MyBoardState extends State<MyBoard> {
         item: MouseRegion(
           cursor: SystemMouseCursors.click,
           child: GestureDetector(
-            onTap: () {},
+            onTap: () {
+              pageController.jumpToPage(3);
+
+              setState(() {
+                taskName = itemObject.title!;
+                taskType = itemObject.type!;
+                taskDate = DateTime.parse(itemObject.date!);
+                taskIsNew = false;
+
+                oldTaskName = itemObject.title!;
+                oldTaskType = itemObject.type!;
+                oldTaskDate = DateTime.parse(itemObject.date!);
+              });
+            },
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),

@@ -1,22 +1,33 @@
-import 'package:appli/taskmanager.dart';
+import 'package:appli_v2/Models/MyEntries.dart';
+import 'package:appli_v2/Models/MyTask.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_sidemenu/easy_sidemenu.dart';
-import 'Models/board.dart';
-import 'dataservice.dart';
-import 'dart:async';
-import 'dart:io';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'Models/MyBoard.dart';
+import 'package:intl/intl.dart';
+import 'NewTask.dart';
 
-void main() {
+void main() async {
+  // initialise Hive - local storage
+  await Hive.initFlutter();
+  Hive.registerAdapter(MyTaskAdapter());
+
+  // open boxes (storage for to-do board)
+  var toDoBox = await Hive.openBox('toDoBox');
+  var inProgressBox = await Hive.openBox('inProgressBox');
+  var doneBox = await Hive.openBox('doneBox');
+
   runApp(const MyApp());
 }
 
+String getDate(DateTime dateTime) => DateFormat('yyyy-MM-dd').format(dateTime);
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(primaryColor: Colors.blue[300]),
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: MyHome(title: 'Appli'),
     );
   }
@@ -31,10 +42,10 @@ class MyHome extends StatefulWidget {
   MyHomeState createState() => MyHomeState();
 }
 
-class MyHomeState extends State<MyHome> {
-  PageController page = PageController();
+PageController pageController = PageController();
 
-  Container _pageLayout(Widget? pageContent) {
+class MyHomeState extends State<MyHome> {
+  Widget _pageLayout(Widget? pageContent) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.8),
@@ -43,6 +54,12 @@ class MyHomeState extends State<MyHome> {
       ),
       margin: const EdgeInsets.all(10),
       child: pageContent,
+    );
+  }
+
+  Widget _buildCol() {
+    return ListTile(
+      title: Text('data'),
     );
   }
 
@@ -57,13 +74,13 @@ class MyHomeState extends State<MyHome> {
         body: Container(
           decoration: const BoxDecoration(
               image: DecorationImage(
-                  image: AssetImage("assets/background.jpg"),
+                  image: AssetImage('assets/background.jpg'),
                   fit: BoxFit.cover)),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               SideMenu(
-                controller: page,
+                controller: pageController,
                 style: SideMenuStyle(
                   displayMode: SideMenuDisplayMode.auto,
                   hoverColor: Colors.white.withOpacity(0.5),
@@ -89,32 +106,27 @@ class MyHomeState extends State<MyHome> {
                   SideMenuItem(
                     priority: 0,
                     title: 'Home',
-                    onTap: () => page.jumpToPage(0),
+                    onTap: () => pageController.jumpToPage(0),
                     icon: const Icon(Icons.home),
                   ),
                   SideMenuItem(
                     priority: 1,
                     title: 'To-do',
-                    onTap: () => page.jumpToPage(1),
+                    onTap: () => pageController.jumpToPage(1),
                     icon: const Icon(Icons.calendar_month),
                   ),
                   SideMenuItem(
                     priority: 2,
                     title: 'My Entries',
-                    onTap: () => page.jumpToPage(2),
+                    onTap: () => pageController.jumpToPage(2),
                     icon: const Icon(Icons.book),
                   ),
-                  SideMenuItem(
-                      priority: 3,
-                      title: 'My Trackers',
-                      onTap: () => page.jumpToPage(3),
-                      icon: const Icon(Icons.timelapse)),
                 ],
               ),
               Expanded(
                 child: PageView(
                   physics: const NeverScrollableScrollPhysics(),
-                  controller: page,
+                  controller: pageController,
                   children: [
                     _pageLayout(const Center(child: Text('Home'))),
                     _pageLayout(Scaffold(
@@ -127,12 +139,26 @@ class MyHomeState extends State<MyHome> {
                             child: FloatingActionButton(
                                 shape: const CircleBorder(),
                                 onPressed: (() {
-                                  page.jumpToPage(4);
+                                  taskIsNew = true;
+                                  taskName = '';
+                                  taskType = 'To-Do';
+                                  taskDate = DateTime.now();
+
+                                  pageController.jumpToPage(3);
                                 }),
                                 child: const Icon(Icons.add))))),
-                    _pageLayout(const Center(child: Text('coming soon'))),
-                    _pageLayout(const Center(child: Text('coming soon'))),
-                    _pageLayout(TaskPage(storage: TaskStorage()))
+                    CustomScrollView(
+                      slivers: [
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate(
+                            (context, index) =>
+                                ListTile(title: Text('index $index')),
+                            childCount: 20,
+                          ),
+                        )
+                      ],
+                    ),
+                    _pageLayout(const TaskPage())
                   ],
                 ),
               ),
